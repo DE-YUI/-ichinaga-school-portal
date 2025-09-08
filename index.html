@@ -1,121 +1,802 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>市立長野中学校 生徒ポータル</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f2f2f2;
-    }
-    header {
-      background-color: #0066cc;
-      color: white;
-      padding: 1em;
-      text-align: center;
-    }
-    main {
-      padding: 2em;
-    }
-    .login-section {
-      max-width: 400px;
-      margin: 2em auto;
-      padding: 2em;
-      background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-    input {
-      width: 100%;
-      padding: 0.5em;
-      margin: 0.5em 0;
-      box-sizing: border-box;
-    }
-    button {
-      width: 100%;
-      padding: 0.7em;
-      margin-top: 1em;
-      background-color: #0066cc;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #005bb5;
-    }
-    #message {
-      margin-top: 1em;
-      color: red;
-      font-weight: bold;
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>市立長野中学校 生徒ポータル（ホーム）</title>
+<style>
+  :root{
+    --brand: #1e3a8a;
+    --accent: #2563eb;
+    --bg: #f5f9ff;
+    --card: #ffffff;
+    --muted: #64748b;
+    --success: #16a34a;
+    --danger: #ef4444;
+  }
+  *{box-sizing:border-box}
+  body{font-family:"Meiryo","Hiragino Kaku Gothic ProN",sans-serif;background:var(--bg);margin:0;color:#0b1220}
+  header{background:linear-gradient(90deg,var(--brand),var(--accent));color:#fff;padding:18px}
+  header .wrap{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  header h1{margin:0;font-size:1.15rem}
+  main{max-width:1100px;margin:20px auto;padding:0 12px}
+  .layout{display:grid;grid-template-columns:260px 1fr;gap:16px}
+  .sidebar{background:var(--card);padding:12px;border-radius:10px;border:1px solid #eef6ff}
+  .content{background:var(--card);padding:14px;border-radius:10px;border:1px solid #eef6ff}
+  .navlink{display:block;padding:8px 10px;border-radius:8px;color:var(--brand);text-decoration:none;margin-bottom:6px}
+  .navlink.active{background:#eef6ff;font-weight:700}
+  .card{background:#fff;padding:10px;border-radius:8px;margin-bottom:12px;border:1px solid #f0f7ff}
+  .small{font-size:0.92rem;color:var(--muted)}
+  input,textarea,select{width:100%;padding:10px;border-radius:8px;border:1px solid #e6eefc;margin-top:8px;background:#fbfdff}
+  button{padding:8px 12px;border-radius:8px;border:0;background:var(--accent);color:#fff;font-weight:700;cursor:pointer}
+  button.ghost{background:transparent;color:var(--brand);border:1px solid #e6eefc}
+  .flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .muted{color:var(--muted)}
+  .notice{background:#f8fbff;padding:10px;border-radius:8px;border:1px solid #eef6ff}
+  .notes .note{padding:10px;border-bottom:1px dashed #f0f6ff}
+  .calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+  .cal-cell{background:#fff;padding:8px;border-radius:8px;border:1px solid #f0f6ff;min-height:80px}
+  .cal-cell.today{border:2px solid var(--accent)}
+  .cal-header{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:6px}
+  .kpi{display:flex;gap:8px;flex-wrap:wrap}
+  .kpi .item{background:#f8fbff;padding:8px;border-radius:8px;border:1px solid #eef6ff}
+  footer{max-width:1100px;margin:12px auto;text-align:center;color:var(--muted);font-size:0.85rem}
+  @media (max-width:900px){
+    .layout{grid-template-columns:1fr; }
+    header .wrap{flex-direction:column;align-items:flex-start;gap:8px}
+  }
+</style>
 </head>
 <body>
-  <header>
+<header>
+  <div class="wrap">
     <h1>市立長野中学校 生徒ポータル</h1>
-  </header>
+    <div class="small" id="headerRight">ログインしてください</div>
+  </div>
+</header>
 
-  <main>
-    <div class="login-section">
-      <h2>ログイン</h2>
-      <input type="email" id="email" placeholder="メールアドレス">
-      <input type="password" id="password" placeholder="パスワード">
-      <button id="loginBtn">ログイン</button>
-      <div id="message"></div>
-    </div>
-  </main>
+<main>
+  <!-- layout: sidebar + main content -->
+  <div class="layout">
+    <aside class="sidebar">
+      <!-- Auth area (shown/hidden by JS) -->
+      <div id="authBox" class="card">
+        <h3>ログイン / 登録</h3>
+        <div class="small muted">学校の許可がある場合のみ実際のメールで登録してください（テストは任意メールでOK）。</div>
+        <input id="email" type="email" placeholder="メールアドレス（例：abc@school.jp）" />
+        <input id="password" type="password" placeholder="パスワード（6文字以上）" />
+        <div class="flex" style="margin-top:8px">
+          <button id="signupBtn">新規登録</button>
+          <button id="loginBtn" class="ghost">ログイン</button>
+        </div>
+        <button id="guestBtn" class="ghost" style="margin-top:8px">ゲストでテスト（保存しない）</button>
+        <div id="authMsg" class="small muted" style="margin-top:8px"></div>
+      </div>
 
-  <!-- Firebase v9 modules -->
-  <script type="module">
-    // Firebase SDK の読み込み
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+      <!-- quick links (home/notes/calendar/announce) -->
+      <nav class="card">
+        <a href="#" class="navlink active" data-view="home">ホーム</a>
+        <a href="#" class="navlink" data-view="notes">メモ</a>
+        <a href="#" class="navlink" data-view="calendar">カレンダー</a>
+        <a href="#" class="navlink" data-view="announce">お知らせ</a>
+        <a href="#" class="navlink" data-view="mypage">マイページ</a>
+      </nav>
 
-    // Firebase 設定（あなたが渡してくれた値）
-    const firebaseConfig = {
-      apiKey: "AIzaSyDhw2AZw8dq1DwywWExyw4bNaf-8qdWq7w",
-      authDomain: "ichinaga-school-portal.firebaseapp.com",
-      projectId: "ichinaga-school-portal",
-      storageBucket: "ichinaga-school-portal.firebasestorage.app",
-      messagingSenderId: "79417995177",
-      appId: "1:79417995177:web:a76c19055e0709051c5eb8"
-    };
+      <div class="card">
+        <h4 class="small">試験運用 KPI</h4>
+        <div class="kpi small">
+          <div class="item">目標：初月50%の生徒が1回以上利用</div>
+          <div class="item">平均メモ保存 回数：週2回</div>
+        </div>
+      </div>
 
-    // Firebase 初期化
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+      <div class="card small">
+        <strong>先生へ</strong>
+        <div class="small muted">・Firestore のルールを必ず設定してください。<br>・公開時は Blaze 検討を。詳細は運用ガイド参照。</div>
+      </div>
+    </aside>
 
-    // ログインボタンの処理
-    const loginBtn = document.getElementById('loginBtn');
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    const messageDiv = document.getElementById('message');
+    <section class="content">
+      <!-- HOME -->
+      <div id="view-home">
+        <div class="card">
+          <h2 id="welcomeTitle">ようこそ！</h2>
+          <div class="notice">
+            <div class="small">ここはあなたの学習ポータルです。下のボタンからメモやカレンダーに移動できます。先生からのお知らせは「お知らせ」タブで確認してください。</div>
+            <div style="margin-top:8px" class="flex">
+              <button id="gotoNotesBtn">メモを書く</button>
+              <button id="gotoCalendarBtn" class="ghost">カレンダーを見る</button>
+              <button id="logoutBtn" class="ghost" style="margin-left:auto;display:none">サインアウト</button>
+            </div>
+          </div>
+        </div>
 
-    loginBtn.addEventListener('click', async () => {
-      const email = emailInput.value;
-      const password = passwordInput.value;
-      messageDiv.textContent = '';
+        <div class="card">
+          <h3>最近のメモ</h3>
+          <div id="recentNotes" class="notes small muted">ログイン後に表示されます。</div>
+        </div>
 
-      if (!email || !password) {
-        messageDiv.textContent = 'メールアドレスとパスワードを入力してください';
+        <div class="card">
+          <h3>今週の予定（カレンダー抜粋）</h3>
+          <div id="miniCal" class="small muted">ログイン後に表示されます。</div>
+        </div>
+
+        <div class="card">
+          <h3>重要なお知らせ（要確認）</h3>
+          <div id="homeAnnouncements" class="small muted">ログイン後に最新のお知らせがここに出ます。</div>
+        </div>
+      </div>
+
+      <!-- NOTES -->
+      <div id="view-notes" style="display:none">
+        <div class="card">
+          <h2>学習メモ</h2>
+          <div class="small muted">自由にメモを保存して、後で振り返れます。</div>
+          <textarea id="noteInput" rows="5" placeholder="今日やったこと、時間、反省点などを記入"></textarea>
+          <div class="flex" style="margin-top:8px">
+            <button id="saveNoteBtn">保存</button>
+            <button id="loadNotesBtn" class="ghost">一覧を更新</button>
+            <button id="exportCsvBtn" class="ghost">自分のCSVをダウンロード</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>自分のメモ一覧</h3>
+          <div id="notesList" class="notes small muted">一覧が表示されます。</div>
+        </div>
+      </div>
+
+      <!-- CALENDAR -->
+      <div id="view-calendar" style="display:none">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <h2>カレンダー</h2>
+            <div class="flex">
+              <button id="prevMonthBtn" class="ghost">◀</button>
+              <div id="currentMonth" class="small muted" style="padding:6px 10px"></div>
+              <button id="nextMonthBtn" class="ghost">▶</button>
+            </div>
+          </div>
+
+          <div class="cal-header small muted">
+            <div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div>
+          </div>
+          <div id="calendarGrid" class="calendar" style="margin-bottom:8px"></div>
+
+          <div id="dayEvents" style="display:none" class="card">
+            <h4 id="dayLabel">選択日</h4>
+            <div id="eventsForDay" class="small muted"></div>
+            <h4 style="margin-top:8px">予定を追加</h4>
+            <input id="eventTitle" placeholder="予定タイトル">
+            <input id="eventTime" placeholder="時間（例: 15:30）">
+            <textarea id="eventNote" rows="3" placeholder="詳細（任意）"></textarea>
+            <div class="flex" style="margin-top:8px">
+              <button id="saveEventBtn">追加</button>
+              <button id="closeDayBtn" class="ghost">閉じる</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ANNOUNCEMENTS -->
+      <div id="view-announce" style="display:none">
+        <div class="card">
+          <h2>お知らせ</h2>
+          <div id="announceList" class="small muted">読み込み中...</div>
+        </div>
+
+        <div class="card small">
+          <h4>先生向け：お知らせを投稿する（管理者のみ）</h4>
+          <div class="small muted">管理者メールは下の ADMIN_EMAILS 配列で設定してください。</div>
+          <input id="announceTitle" placeholder="タイトル">
+          <textarea id="announceBody" rows="3" placeholder="本文"></textarea>
+          <div class="flex" style="margin-top:8px">
+            <button id="postAnnounceBtn">投稿する</button>
+            <button id="clearAnnounceBtn" class="ghost">入力クリア</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MY PAGE -->
+      <div id="view-mypage" style="display:none">
+        <div class="card">
+          <h2>マイページ</h2>
+          <div class="small">ログイン中: <strong id="mypageEmail">-</strong></div>
+          <div style="margin-top:8px" class="small muted">アカウントの管理やエクスポートができます。</div>
+          <div style="margin-top:8px" class="flex">
+            <button id="signoutBtn">サインアウト</button>
+            <button id="downloadAllBtn" class="ghost">自分のメモをCSVでダウンロード</button>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </div>
+</main>
+
+<footer>市立長野中学校 生徒ポータル（試作） — 公開前に必ず担当教員の承認を得てください。</footer>
+
+<!-- Firebase CDN (modular v9) -->
+<script type="module">
+  /* ============================================================
+     Firebase の初期化（あなたのプロジェクト設定をここに入れてください）
+     既に取得済みの設定があれば、そのまま貼ってもOKです。
+     ============================================================ */
+
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+  import {
+    getAuth, onAuthStateChanged,
+    createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut
+  } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+  import {
+    getFirestore, collection, addDoc, query, where, orderBy, getDocs, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
+  // ---------- ここをあなたの firebaseConfig に書き換えてください ----------
+  const firebaseConfig = {
+    apiKey: "AIzaSyDhw2AZw8dq1DwywWExyw4bNaf-8qdWq7w",
+    authDomain: "ichinaga-school-portal.firebaseapp.com",
+    projectId: "ichinaga-school-portal",
+    storageBucket: "ichinaga-school-portal.firebasestorage.app",
+    messagingSenderId: "79417995177",
+    appId: "1:79417995177:web:a76c19055e0709051c5eb8"
+  };
+  // ------------------------------------------------------------------------
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  /* ----------------------
+     管理者メール（お知らせ投稿権限など）をここで指定
+     編集：学校の先生のメールアドレスを入れてください（配列で複数可）
+     ---------------------- */
+  const ADMIN_EMAILS = ["teacher@example.com"]; // <-- 本番では先生のメールに変更
+
+  /* ----------------------
+     DOM 要素を取得
+     ---------------------- */
+  const headerRight = document.getElementById('headerRight');
+  const authBox = document.getElementById('authBox');
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+  const signupBtn = document.getElementById('signupBtn');
+  const loginBtn = document.getElementById('loginBtn');
+  const guestBtn = document.getElementById('guestBtn');
+  const authMsg = document.getElementById('authMsg');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const signoutBtn = document.getElementById('signoutBtn');
+
+  const navlinks = document.querySelectorAll('.navlink');
+  const views = {
+    home: document.getElementById('view-home'),
+    notes: document.getElementById('view-notes'),
+    calendar: document.getElementById('view-calendar'),
+    announce: document.getElementById('view-announce'),
+    mypage: document.getElementById('view-mypage')
+  };
+
+  // Home elements
+  const welcomeTitle = document.getElementById('welcomeTitle');
+  const recentNotes = document.getElementById('recentNotes');
+  const homeAnnouncements = document.getElementById('homeAnnouncements');
+  const miniCal = document.getElementById('miniCal');
+
+  // Notes elements
+  const noteInput = document.getElementById('noteInput');
+  const saveNoteBtn = document.getElementById('saveNoteBtn');
+  const loadNotesBtn = document.getElementById('loadNotesBtn');
+  const notesList = document.getElementById('notesList');
+  const exportCsvBtn = document.getElementById('exportCsvBtn');
+
+  // Calendar elements
+  const calendarGrid = document.getElementById('calendarGrid');
+  const currentMonthLabel = document.getElementById('currentMonth');
+  const prevMonthBtn = document.getElementById('prevMonthBtn');
+  const nextMonthBtn = document.getElementById('nextMonthBtn');
+  const dayEvents = document.getElementById('dayEvents');
+  const dayLabel = document.getElementById('dayLabel');
+  const eventsForDay = document.getElementById('eventsForDay');
+  const eventTitle = document.getElementById('eventTitle');
+  const eventTime = document.getElementById('eventTime');
+  const eventNote = document.getElementById('eventNote');
+  const saveEventBtn = document.getElementById('saveEventBtn');
+  const closeDayBtn = document.getElementById('closeDayBtn');
+
+  // Announce elements
+  const announceList = document.getElementById('announceList');
+  const announceTitle = document.getElementById('announceTitle');
+  const announceBody = document.getElementById('announceBody');
+  const postAnnounceBtn = document.getElementById('postAnnounceBtn');
+  const clearAnnounceBtn = document.getElementById('clearAnnounceBtn');
+
+  // My page
+  const mypageEmail = document.getElementById('mypageEmail');
+  const downloadAllBtn = document.getElementById('downloadAllBtn');
+  const gotoNotesBtn = document.getElementById('gotoNotesBtn');
+  const gotoCalendarBtn = document.getElementById('gotoCalendarBtn');
+
+  /* ----------------------
+     State & helper
+     ---------------------- */
+  let currentUser = null;
+  let currentView = 'home';
+  let calYear, calMonth; // displayed year/month
+  let selectedDateStr = null; // "YYYY-MM-DD"
+
+  function showView(name){
+    currentView = name;
+    Object.values(views).forEach(v => v.style.display = 'none');
+    if(views[name]) views[name].style.display = 'block';
+    navlinks.forEach(a => a.classList.toggle('active', a.dataset.view === name));
+  }
+
+  navlinks.forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const v = a.dataset.view;
+      showView(v);
+    });
+  });
+
+  // simple utility to format YYYY-MM-DD
+  function ymd(dt){ // Date -> "YYYY-MM-DD"
+    const y = dt.getFullYear();
+    const m = String(dt.getMonth()+1).padStart(2,'0');
+    const d = String(dt.getDate()).padStart(2,'0');
+    return `${y}-${m}-${d}`;
+  }
+
+  // -------------------------
+  // Authentication handlers
+  // -------------------------
+  signupBtn.addEventListener('click', async () => {
+    const email = emailInput.value.trim();
+    const pw = passwordInput.value;
+    if(!email || pw.length < 6){ authMsg.textContent = 'メールと6文字以上のパスワードを入力してください'; return; }
+    try{
+      await createUserWithEmailAndPassword(auth, email, pw);
+      authMsg.style.color = 'green';
+      authMsg.textContent = '登録しました。ログインしてください。';
+    }catch(err){
+      console.error(err);
+      authMsg.style.color = 'red';
+      authMsg.textContent = '登録エラー: ' + err.message;
+    }
+  });
+
+  loginBtn.addEventListener('click', async ()=>{
+    const email = emailInput.value.trim();
+    const pw = passwordInput.value;
+    if(!email || !pw){ authMsg.textContent = '入力してください'; return; }
+    try{
+      await signInWithEmailAndPassword(auth, email, pw);
+    }catch(err){
+      console.error(err);
+      authMsg.style.color = 'red';
+      authMsg.textContent = 'ログイン失敗: ' + (err.message || err.code);
+    }
+  });
+
+  guestBtn.addEventListener('click', ()=>{
+    authBox.style.display = 'none';
+    headerRight.textContent = 'ゲスト';
+    // show a simple guest home (no saving)
+    currentUser = null;
+    welcomeTitle.textContent = 'ゲストでようこそ';
+    showView('home');
+  });
+
+  signoutBtn.addEventListener('click', ()=> signOut(auth));
+  logoutBtn.addEventListener('click', ()=> signOut(auth));
+
+  onAuthStateChanged(auth, user => {
+    currentUser = user;
+    if(user){
+      // UI adjustments
+      authBox.style.display = 'none';
+      headerRight.textContent = 'ログイン中: ' + (user.email || '(不明)');
+      document.getElementById('logoutBtn').style.display = 'inline-block';
+      document.getElementById('mypageEmail').textContent = user.email || '-';
+      // welcome
+      welcomeTitle.textContent = `ようこそ、${user.email} さん！`;
+      // load initial data
+      loadRecentNotes();
+      renderMiniCal();
+      loadAnnouncements();
+      // show home
+      showView('home');
+    } else {
+      authBox.style.display = 'block';
+      headerRight.textContent = 'ログインしてください';
+      document.getElementById('logoutBtn').style.display = 'none';
+      document.getElementById('mypageEmail').textContent = '-';
+      // show login view
+      showView('home');
+      // clear lists
+      recentNotes.innerHTML = 'ログインしてください';
+      notesList.innerHTML = 'ログインしてください';
+      announceList.innerHTML = 'ログインしてください';
+    }
+  });
+
+  /* -------------------------
+     Notes: save / load / export
+     ------------------------- */
+  saveNoteBtn.addEventListener('click', async ()=>{
+    if(!currentUser){ alert('ログインしてください'); return; }
+    const content = noteInput.value.trim();
+    if(!content) return alert('メモを入力してください');
+    try{
+      await addDoc(collection(db,'notes'), {
+        uid: currentUser.uid,
+        email: currentUser.email || null,
+        content,
+        createdAt: serverTimestamp()
+      });
+      noteInput.value = '';
+      alert('保存しました');
+      loadNotesForCurrentUser();
+      loadRecentNotes();
+    }catch(e){
+      console.error(e);
+      alert('保存に失敗しました: ' + e.message);
+    }
+  });
+
+  loadNotesBtn.addEventListener('click', ()=> loadNotesForCurrentUser());
+
+  async function loadNotesForCurrentUser(){
+    notesList.innerHTML = '';
+    if(!currentUser){ notesList.innerHTML = '<div class="small muted">ログインしてください</div>'; return; }
+    try{
+      const q = query(collection(db,'notes'), where('uid','==', currentUser.uid), orderBy('createdAt','desc'));
+      const snap = await getDocs(q);
+      if(snap.empty){ notesList.innerHTML = '<div class="small muted">まだメモはありません。</div>'; return; }
+      snap.forEach(doc=>{
+        const d = doc.data();
+        const time = d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleString() : '';
+        const el = document.createElement('div');
+        el.className = 'note';
+        el.innerHTML = `<div class="small muted">${time}</div><div>${escapeHtml(d.content)}</div>`;
+        notesList.appendChild(el);
+      });
+    }catch(e){
+      console.error(e);
+      notesList.innerHTML = '<div class="small muted">取得失敗</div>';
+    }
+  }
+
+  async function loadRecentNotes(){
+    recentNotes.innerHTML = '';
+    if(!currentUser){ recentNotes.innerHTML = 'ログインしてください'; return; }
+    try{
+      const q = query(collection(db,'notes'), where('uid','==', currentUser.uid), orderBy('createdAt','desc'));
+      const snap = await getDocs(q);
+      let count = 0;
+      snap.forEach(doc=>{
+        if(count++ >= 3) return;
+        const d = doc.data();
+        const time = d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleString() : '';
+        const div = document.createElement('div');
+        div.className = 'note';
+        div.innerHTML = `<div class="small muted">${time}</div><div>${escapeHtml(d.content)}</div>`;
+        recentNotes.appendChild(div);
+      });
+      if(count === 0) recentNotes.innerHTML = '<div class="small muted">まだメモがありません</div>';
+    }catch(e){
+      console.error(e);
+      recentNotes.innerHTML = '<div class="small muted">取得失敗</div>';
+    }
+  }
+
+  exportCsvBtn.addEventListener('click', async ()=>{
+    if(!currentUser) return alert('ログインしてください');
+    try{
+      const q = query(collection(db,'notes'), where('uid','==', currentUser.uid), orderBy('createdAt','desc'));
+      const snap = await getDocs(q);
+      let csv = 'createdAt,content\n';
+      snap.forEach(doc=>{
+        const d = doc.data();
+        const ts = d.createdAt ? new Date(d.createdAt.seconds*1000).toISOString() : '';
+        const line = `${ts},"${(d.content||'').replace(/"/g,'""')}"\n`;
+        csv += line;
+      });
+      const blob = new Blob([csv], {type:'text/csv'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'my_notes.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }catch(e){
+      console.error(e);
+      alert('エクスポートに失敗しました: ' + e.message);
+    }
+  });
+
+  downloadAllBtn.addEventListener('click', ()=> exportCsvBtn.click());
+
+  /* -------------------------
+     Announcements: load & post (admin)
+     ------------------------- */
+  async function loadAnnouncements(){
+    announceList.innerHTML = '';
+    homeAnnouncements.innerHTML = '';
+    try{
+      const q = query(collection(db,'announcements'), orderBy('createdAt','desc'));
+      const snap = await getDocs(q);
+      if(snap.empty){
+        announceList.innerHTML = '<div class="small muted">お知らせはありません</div>';
+        homeAnnouncements.innerHTML = '<div class="small muted">お知らせはありません</div>';
         return;
       }
+      snap.forEach(doc=>{
+        const d = doc.data();
+        const time = d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleString() : '';
+        const el = document.createElement('div');
+        el.style.marginBottom = '8px';
+        el.innerHTML = `<div style="font-weight:700">${escapeHtml(d.title)}</div><div class="small muted">${time}</div><div>${escapeHtml(d.body)}</div>`;
+        announceList.appendChild(el);
 
-      try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-        messageDiv.style.color = 'green';
-        messageDiv.textContent = `ログイン成功！ようこそ、${user.email}さん`;
-        // ここにログイン後の処理を追加可能
-      } catch (error) {
-        messageDiv.style.color = 'red';
-        messageDiv.textContent = 'ログインに失敗しました: ' + error.message;
-      }
+        // also add top 1 to homeAnnouncements
+        if(homeAnnouncements.children.length < 1){
+          homeAnnouncements.innerHTML = `<div style="font-weight:700">${escapeHtml(d.title)}</div><div class="small muted">${time}</div><div>${escapeHtml(d.body)}</div>`;
+        }
+      });
+    }catch(e){
+      console.error(e);
+      announceList.innerHTML = '<div class="small muted">取得に失敗しました</div>';
+      homeAnnouncements.innerHTML = '<div class="small muted">取得に失敗しました</div>';
+    }
+  }
+
+  postAnnounceBtn.addEventListener('click', async ()=>{
+    if(!currentUser) return alert('ログインしてください');
+    if(!ADMIN_EMAILS.includes(currentUser.email)){
+      return alert('お知らせ投稿は管理者のみ可能です');
+    }
+    const title = announceTitle.value.trim();
+    const body = announceBody.value.trim();
+    if(!title || !body) return alert('タイトルと本文を入力してください');
+    try{
+      await addDoc(collection(db,'announcements'), {
+        title, body, createdAt: serverTimestamp(), author: currentUser.email
+      });
+      announceTitle.value = '';
+      announceBody.value = '';
+      alert('投稿しました');
+      loadAnnouncements();
+    }catch(e){
+      console.error(e);
+      alert('投稿失敗: ' + e.message);
+    }
+  });
+  clearAnnounceBtn.addEventListener('click', ()=>{ announceTitle.value=''; announceBody.value=''; });
+
+  /* -------------------------
+     Calendar: render / add event / load events
+     ------------------------- */
+  function renderMiniCal(){
+    // small summary for home
+    const today = new Date();
+    calYear = today.getFullYear();
+    calMonth = today.getMonth();
+    renderCalendar(calYear, calMonth);
+    renderMiniList(today);
+  }
+
+  function renderMiniList(today){
+    // show next few events for the week in miniCal
+    miniCal.innerHTML = '読み込み中...';
+    const start = new Date(today);
+    start.setDate(start.getDate()- (start.getDay())); // sunday start
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+    // query events between start and end
+    loadEventsBetween(start, end).then(events=>{
+      if(events.length===0){ miniCal.innerHTML = '<div class="small muted">今週の予定はありません</div>'; return; }
+      miniCal.innerHTML = '';
+      events.slice(0,5).forEach(ev=>{
+        const div = document.createElement('div');
+        div.innerHTML = `<div style="font-weight:700">${escapeHtml(ev.title)} <span class="small muted">(${ev.date} ${ev.time || ''})</span></div><div>${escapeHtml(ev.note||'')}</div>`;
+        miniCal.appendChild(div);
+      });
     });
-  </script>
+  }
+
+  async function loadEventsBetween(startDate, endDate){
+    // events stored with date 'YYYY-MM-DD'
+    try{
+      const q = query(collection(db,'events'), orderBy('date','asc'));
+      const snap = await getDocs(q);
+      const out = [];
+      snap.forEach(doc=>{
+        const d = doc.data();
+        if(!d.date) return;
+        const dt = new Date(d.date + 'T00:00:00');
+        if(dt >= startDate && dt <= endDate) out.push({...d, id: doc.id});
+      });
+      return out;
+    }catch(e){
+      console.error(e);
+      return [];
+    }
+  }
+
+  function renderCalendar(y,m){
+    calendarGrid.innerHTML = '';
+    currentMonthLabel.textContent = `${y}年 ${m+1}月`;
+    // first day of month
+    const first = new Date(y,m,1);
+    const startDay = first.getDay(); // 0-sun
+    const days = new Date(y, m+1, 0).getDate();
+    // previous month's days to fill
+    const prevDays = new Date(y, m, 0).getDate();
+
+    // fill blanks before first
+    for(let i=0;i<startDay;i++){
+      const cell = document.createElement('div');
+      cell.className = 'cal-cell';
+      cell.innerHTML = `<div class="small muted">${prevDays - (startDay-1) + i}</div>`;
+      calendarGrid.appendChild(cell);
+    }
+    // days of this month
+    for(let d=1; d<=days; d++){
+      const cell = document.createElement('div');
+      cell.className = 'cal-cell';
+      const dt = new Date(y,m,d);
+      const ymdStr = ymd(dt);
+      if(ymdStr === ymd(new Date())) cell.classList.add('today');
+      cell.innerHTML = `<div style="font-weight:700">${d}</div><div class="small" id="ev-${ymdStr}">読み込み中...</div>`;
+      cell.addEventListener('click', ()=> openDay(ymdStr));
+      calendarGrid.appendChild(cell);
+    }
+    // fill the rest to make 6 rows (optional)
+    const totalCells = calendarGrid.children.length;
+    const need = (7*6) - totalCells;
+    for(let i=0;i<need;i++){
+      const cell = document.createElement('div');
+      cell.className = 'cal-cell';
+      cell.innerHTML = '&nbsp;';
+      calendarGrid.appendChild(cell);
+    }
+    // after rendering, load events for this month and populate counts
+    loadEventsForMonth(y,m);
+  }
+
+  async function loadEventsForMonth(year, month){
+    // get events and map counts by date
+    try{
+      const q = query(collection(db,'events'), orderBy('date','asc'));
+      const snap = await getDocs(q);
+      const counts = {};
+      snap.forEach(doc=>{
+        const d = doc.data();
+        if(!d.date) return;
+        counts[d.date] = (counts[d.date]||0) + 1;
+      });
+      // populate counts
+      Object.keys(counts).forEach(dateStr=>{
+        const el = document.getElementById('ev-'+dateStr);
+        if(el) el.textContent = `${counts[dateStr]} 件`;
+      });
+    }catch(e){
+      console.error(e);
+    }
+  }
+
+  prevMonthBtn.addEventListener('click', ()=>{
+    const dt = new Date(calYear,calMonth-1,1);
+    calYear = dt.getFullYear(); calMonth = dt.getMonth();
+    renderCalendar(calYear,calMonth);
+  });
+  nextMonthBtn.addEventListener('click', ()=>{
+    const dt = new Date(calYear,calMonth+1,1);
+    calYear = dt.getFullYear(); calMonth = dt.getMonth();
+    renderCalendar(calYear,calMonth);
+  });
+
+  function openDay(dateStr){
+    selectedDateStr = dateStr;
+    dayLabel.textContent = `${dateStr} の予定`;
+    eventsForDay.innerHTML = '読み込み中...';
+    dayEvents.style.display = 'block';
+    loadEventsForDate(dateStr);
+  }
+
+  async function loadEventsForDate(dateStr){
+    eventsForDay.innerHTML = '';
+    try{
+      const q = query(collection(db,'events'), where('date','==', dateStr), orderBy('time','asc'));
+      const snap = await getDocs(q);
+      if(snap.empty){ eventsForDay.innerHTML = '<div class="small muted">予定はありません</div>'; return; }
+      snap.forEach(doc=>{
+        const d = doc.data();
+        const div = document.createElement('div');
+        div.className = 'note';
+        div.innerHTML = `<div style="font-weight:700">${escapeHtml(d.title)} <span class="small muted">${d.time || ''}</span></div><div>${escapeHtml(d.note||'')}</div><div class="small muted">作成者:${escapeHtml(d.author||'')}</div>`;
+        eventsForDay.appendChild(div);
+      });
+    }catch(e){
+      console.error(e);
+      eventsForDay.innerHTML = '<div class="small muted">取得失敗</div>';
+    }
+  }
+
+  saveEventBtn.addEventListener('click', async ()=>{
+    if(!currentUser) return alert('ログインしてください');
+    if(!selectedDateStr) return alert('日付を選んでください');
+    const title = eventTitle.value.trim();
+    const time = eventTime.value.trim();
+    const note = eventNote.value.trim();
+    if(!title) return alert('タイトルを入力してください');
+    try{
+      await addDoc(collection(db,'events'), {
+        date: selectedDateStr,
+        title, time, note,
+        author: currentUser.email || null,
+        createdAt: serverTimestamp()
+      });
+      eventTitle.value=''; eventTime.value=''; eventNote.value='';
+      alert('予定を追加しました');
+      loadEventsForDate(selectedDateStr);
+      loadEventsBetween(new Date(calYear,calMonth,1), new Date(calYear,calMonth+1,0)).then(()=> loadEventsForMonth(calYear,calMonth));
+      renderMiniList(new Date());
+    }catch(e){
+      console.error(e);
+      alert('予定追加失敗: ' + e.message);
+    }
+  });
+  closeDayBtn.addEventListener('click', ()=>{ dayEvents.style.display='none'; selectedDateStr=null; });
+
+  /* -------------------------
+     Utilities
+     ------------------------- */
+  function escapeHtml(s){ return (s||'').toString().replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('\\n','<br/>'); }
+
+  /* -------------------------
+     Initial rendering
+     ------------------------- */
+  // initialize calendar to current month
+  (function init(){
+    const today = new Date();
+    calYear = today.getFullYear(); calMonth = today.getMonth();
+    renderCalendar(calYear,calMonth);
+    // wire up shortcuts
+    gotoNotesBtn.addEventListener('click', ()=> showView('notes'));
+    gotoCalendarBtn.addEventListener('click', ()=> showView('calendar'));
+    document.getElementById('saveNoteBtn').addEventListener('click', ()=> saveNoteBtn.click());
+    document.getElementById('loadNotesBtn').addEventListener('click', ()=> loadNotesForCurrentUser());
+  })();
+
+  /* -------------------------
+     Firestore セキュリティ ルール（参考）
+     Firebase コンソール → Firestore → ルール に貼ってください
+     ------------------------- */
+  /*
+  rules_version = '2';
+  service cloud.firestore {
+    match /databases/{database}/documents {
+      match /notes/{noteId} {
+        allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+        allow read, update, delete: if request.auth != null && resource.data.uid == resource.data.uid;
+      }
+      match /events/{eventId} {
+        allow create: if request.auth != null; // 学校運用次第で制限
+        allow read: if true;
+      }
+      match /announcements/{a} {
+        allow read: if true;
+        allow create: if request.auth != null && request.auth.token.email in ['teacher@example.com']; // adjust
+      }
+    }
+  }
+  */
+
+  /* ===========================
+     End of script
+     =========================== */
+</script>
 </body>
 </html>
